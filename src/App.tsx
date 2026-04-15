@@ -16,6 +16,7 @@ const FilterBuilder     = lazy(() => import("./pages/FilterBuilder"));
 const ImportLeads       = lazy(() => import("./pages/ImportLeads"));
 const AddLead           = lazy(() => import("./pages/AddLead"));
 const ContactInquiries  = lazy(() => import("./pages/ContactInquiries"));
+const ChangePassword    = lazy(() => import("./pages/ChangePassword"));
 
 const isAuth = () => !!localStorage.getItem("token");
 const Protected = ({ children }: { children: React.ReactNode }) =>
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/import-leads"        element={<Protected><ImportLeads /></Protected>} />
         <Route path="/add-lead"            element={<Protected><AddLead /></Protected>} />
         <Route path="/contact-inquiries"   element={<Protected><ContactInquiries /></Protected>} />
+        <Route path="/change-password"     element={<Protected><ChangePassword /></Protected>} />
         <Route path="*"                    element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
