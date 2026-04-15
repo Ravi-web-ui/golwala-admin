@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { font-family: system-ui, sans-serif; background: #f3f4f6; }
+.label { @apply block text-sm font-semibold text-gray-700 mb-1.5; }
+
+/* ── Dark mode global overrides ─────────────────────────────────────────── */
+.dark body { background: #030712; }
+
+/* Cards / surfaces */
+.dark .bg-white          { background-color: #111827 !important; }
+.dark .bg-gray-50        { background-color: #0f172a !important; }
+.dark .bg-gray-100       { background-color: #1e293b !important; }
+.dark .bg-gray-200       { background-color: #1e293b !important; }
+
+/* Borders */
+.dark .border            { border-color: #1f2937 !important; }
+.dark .border-gray-100   { border-color: #1f2937 !important; }
+.dark .border-gray-200   { border-color: #1f2937 !important; }
+.dark .border-gray-300   { border-color: #374151 !important; }
+.dark .divide-gray-100 > * + * { border-color: #1f2937 !important; }
+.dark .divide-gray-200 > * + * { border-color: #1f2937 !important; }
+
+/* Text */
+.dark .text-gray-900     { color: #f1f5f9 !important; }
+.dark .text-gray-800     { color: #e2e8f0 !important; }
+.dark .text-gray-700     { color: #cbd5e1 !important; }
+.dark .text-gray-600     { color: #94a3b8 !important; }
+.dark .text-gray-500     { color: #64748b !important; }
+.dark .text-gray-400     { color: #475569 !important; }
+
+/* Inputs / selects */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1f2937 !important;
+  border-color:     #374151 !important;
+  color:            #e2e8f0 !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: #6b7280 !important; }
+
+/* Tables */
+.dark table              { background-color: #111827 !important; }
+.dark thead              { background-color: #1f2937 !important; }
+.dark thead th           { color: #9ca3af !important; border-color: #374151 !important; }
+.dark tbody tr           { border-color: #1f2937 !important; }
+.dark tbody tr:hover     { background-color: #1f2937 !important; }
+.dark td                 { color: #d1d5db !important; border-color: #1f2937 !important; }
+
+/* Hover states */
+.dark .hover\:bg-gray-50:hover  { background-color: #1f2937 !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #374151 !important; }
+
+/* Shadows */
+.dark .shadow-sm         { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.4) !important; }
+.dark .shadow            { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.5) !important; }
+
+/* Buttons — default text color when no explicit text-* class */
+.dark button:not([class*="text-"]) { color: #d1d5db; }
+.dark button[class*="border"]:not([class*="text-"]) { color: #d1d5db; }
+.dark button[class*="text-gray-500"] { color: #94a3b8 !important; }
+.dark button[class*="text-gray-600"] { color: #94a3b8 !important; }
+.dark button[class*="text-gray-700"] { color: #cbd5e1 !important; }
+
+/* Outline / ghost buttons with border only */
+.dark button.border,
+.dark a.border { color: #d1d5db; }
+
+/* Ensure text-sm font-medium buttons are readable */
+.dark .text-sm.font-medium { color: #cbd5e1; }
+
+/* Misc */
+.dark .label { color: #cbd5e1 !important; }
+.dark .ring-gray-200 { --tw-ring-color: #374151 !important; }
+
+/* Dropdown / popover menus */
+.dark [role="menu"],
+.dark [role="listbox"],
+.dark [role="dialog"] {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  color: #d1d5db !important;
+}
+
+/* Badge / pill text */
+.dark .text-orange-600 { color: #fb923c !important; }
+.dark .bg-orange-50    { background-color: #431407 !important; }
+.dark .text-blue-600   { color: #60a5fa !important; }
+.dark .bg-blue-50      { background-color: #172554 !important; }
+.dark .text-green-600  { color: #4ade80 !important; }
+.dark .bg-green-50     { background-color: #052e16 !important; }
+.dark .text-purple-600 { color: #c084fc !important; }
+.dark .bg-purple-50    { background-color: #3b0764 !important; }
+.dark .text-yellow-600 { color: #facc15 !important; }
+.dark .bg-yellow-50    { background-color: #422006 !important; }
