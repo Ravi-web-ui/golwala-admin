@@ -89,7 +89,7 @@ export default function AdminManagement() {
 
   const updateSelf = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await api.patch("/admins/me", { name: editTarget.name, email: editTarget.email });
+    const res = await api.patch("/admins/me", { name: editTarget.name, email: editTarget.email, phone: editTarget.phone || null });
     if (res.message) {
       flash("Profile updated");
       if (res.user) localStorage.setItem("user", JSON.stringify(res.user));
@@ -143,17 +143,17 @@ export default function AdminManagement() {
 
   return (
     <Layout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Admin Management</h2>
           <p className="text-sm text-gray-500">Manage users, permissions and program access</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowChangePass(true)} className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">🔑 Change My Password</button>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setShowChangePass(true)} className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50">🔑 Change Password</button>
           {me.role === "super_admin" && (
             <>
-              <button onClick={() => { setEditTarget({...admins.find((a:any)=>a.id===me.id)||me}); setEditingSelf(true); }} className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50">✏️ Edit My Profile</button>
-              <button onClick={() => setShowCreate(true)} className="px-4 py-2 text-white rounded-lg text-sm font-medium" style={{ background:"linear-gradient(135deg,#c0392b,#8e1a10)" }}>+ Add User</button>
+              <button onClick={() => { setEditTarget({...admins.find((a:any)=>a.id===me.id)||me}); setEditingSelf(true); }} className="px-3 py-2 border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50">✏️ My Profile</button>
+              <button onClick={() => setShowCreate(true)} className="px-3 py-2 text-white rounded-lg text-xs font-medium" style={{ background:"linear-gradient(135deg,#c0392b,#8e1a10)" }}>+ Add User</button>
             </>
           )}
         </div>
@@ -163,46 +163,78 @@ export default function AdminManagement() {
         <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${msg.type==="error"?"bg-red-50 text-red-600 border border-red-200":"bg-green-50 text-green-700 border border-green-200"}`}>{msg.text}</div>
       )}
 
-      {/* Users table */}
+      {/* Users table — desktop */}
       <div className="bg-white rounded-xl border shadow-sm overflow-hidden mb-8">
         <div className="px-5 py-4 border-b bg-gray-50"><h3 className="font-semibold text-gray-700 text-sm">All Users</h3></div>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>{["Name","Email","Role","Programs","Created","Actions"].map(h => (
-              <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-            ))}</tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {admins.map(a => (
-              <tr key={a.id} className="hover:bg-gray-50">
-                <td className="px-5 py-3 font-medium text-gray-800">{a.name} {a.id===me.id&&<span className="text-xs text-gray-400">(you)</span>}</td>
-                <td className="px-5 py-3 text-gray-600">{a.email}</td>
-                <td className="px-5 py-3">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${a.role==="super_admin"?"bg-purple-100 text-purple-700":a.role==="manager"?"bg-orange-100 text-orange-700":"bg-blue-100 text-blue-700"}`}>
-                    {a.role==="super_admin"?"Super Admin":a.role==="manager"?"Manager":"Admin"}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-gray-500 text-xs">
-                  {(a.programAssignments||[]).length > 0
-                    ? <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs font-medium">{(a.programAssignments||[]).length} programs</span>
-                    : <span className="text-gray-300">All programs</span>}
-                </td>
-                <td className="px-5 py-3 text-gray-400">{new Date(a.createdAt||a.created_at).toLocaleDateString("en-IN")}</td>
-                <td className="px-5 py-3">
-                  <div className="flex gap-2">
-                    {me.role==="super_admin" && a.id!==me.id && (
-                      <>
-                        <button onClick={() => setEditTarget({...a})} className="text-xs px-3 py-1 border rounded-lg hover:bg-gray-50 text-blue-600">Edit</button>
-                        <button onClick={() => setResetTarget(a)} className="text-xs px-3 py-1 border rounded-lg hover:bg-gray-50 text-gray-600">Reset Pass</button>
-                        <button onClick={() => deleteAdmin(a.id, a.name)} className="text-xs px-3 py-1 border border-red-200 rounded-lg hover:bg-red-50 text-red-500">Delete</button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+
+        {/* Mobile cards */}
+        <div className="divide-y divide-gray-100 sm:hidden">
+          {admins.map(a => (
+            <div key={a.id} className="p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">{a.name} {a.id===me.id&&<span className="text-xs text-gray-400">(you)</span>}</p>
+                  <p className="text-xs text-gray-500">{a.email}</p>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${a.role==="super_admin"?"bg-purple-100 text-purple-700":a.role==="manager"?"bg-orange-100 text-orange-700":"bg-blue-100 text-blue-700"}`}>
+                  {a.role==="super_admin"?"Super Admin":a.role==="manager"?"Manager":"Admin"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-400">
+                <span>{(a.programAssignments||[]).length > 0 ? `${(a.programAssignments||[]).length} programs` : "All programs"}</span>
+                <span>{new Date(a.createdAt||a.created_at).toLocaleDateString("en-IN")}</span>
+              </div>
+              {me.role==="super_admin" && a.id!==me.id && (
+                <div className="flex gap-2 pt-1">
+                  <button onClick={() => setEditTarget({...a})} className="text-xs px-3 py-1 border rounded-lg hover:bg-gray-50 text-blue-600">Edit</button>
+                  <button onClick={() => setResetTarget(a)} className="text-xs px-3 py-1 border rounded-lg hover:bg-gray-50 text-gray-600">Reset Pass</button>
+                  <button onClick={() => deleteAdmin(a.id, a.name)} className="text-xs px-3 py-1 border border-red-200 rounded-lg hover:bg-red-50 text-red-500">Delete</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr>{["Name","Email","Role","Programs","Created","Actions"].map(h => (
+                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+              ))}</tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {admins.map(a => (
+                <tr key={a.id} className="hover:bg-gray-50">
+                  <td className="px-5 py-3 font-medium text-gray-800 whitespace-nowrap">{a.name} {a.id===me.id&&<span className="text-xs text-gray-400">(you)</span>}</td>
+                  <td className="px-5 py-3 text-gray-600">{a.email}</td>
+                  <td className="px-5 py-3">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${a.role==="super_admin"?"bg-purple-100 text-purple-700":a.role==="manager"?"bg-orange-100 text-orange-700":"bg-blue-100 text-blue-700"}`}>
+                      {a.role==="super_admin"?"Super Admin":a.role==="manager"?"Manager":"Admin"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-gray-500 text-xs">
+                    {(a.programAssignments||[]).length > 0
+                      ? <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded text-xs font-medium">{(a.programAssignments||[]).length} programs</span>
+                      : <span className="text-gray-300">All programs</span>}
+                  </td>
+                  <td className="px-5 py-3 text-gray-400 whitespace-nowrap">{new Date(a.createdAt||a.created_at).toLocaleDateString("en-IN")}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex gap-2">
+                      {me.role==="super_admin" && a.id!==me.id && (
+                        <>
+                          <button onClick={() => setEditTarget({...a})} className="text-xs px-3 py-1 border rounded-lg hover:bg-gray-50 text-blue-600 whitespace-nowrap">Edit</button>
+                          <button onClick={() => setResetTarget(a)} className="text-xs px-3 py-1 border rounded-lg hover:bg-gray-50 text-gray-600 whitespace-nowrap">Reset Pass</button>
+                          <button onClick={() => deleteAdmin(a.id, a.name)} className="text-xs px-3 py-1 border border-red-200 rounded-lg hover:bg-red-50 text-red-500 whitespace-nowrap">Delete</button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Permissions + Program Assignment */}
@@ -325,6 +357,12 @@ export default function AdminManagement() {
           <form onSubmit={editingSelf ? updateSelf : updateAdmin} className="space-y-4">
             <div><label className="label">Full Name</label><input required value={editTarget.name} onChange={e => setEditTarget({...editTarget,name:e.target.value})} className={inp} /></div>
             <div><label className="label">Email</label><input type="email" required={editingSelf} value={editTarget.email} disabled={!editingSelf} onChange={e => setEditTarget({...editTarget,email:e.target.value})} className={inp+(editingSelf?"":" opacity-50 cursor-not-allowed")} /></div>
+            {editingSelf && (
+              <div>
+                <label className="label">WhatsApp Number <span className="text-gray-400 font-normal">(for lead notifications)</span></label>
+                <input type="tel" placeholder="e.g. 9876543210" value={editTarget.phone || ""} onChange={e => setEditTarget({...editTarget,phone:e.target.value})} className={inp} />
+              </div>
+            )}
             {!editingSelf && (
               <div><label className="label">Role</label>
                 <select value={editTarget.role} onChange={e => setEditTarget({...editTarget,role:e.target.value})} className={inp}>
