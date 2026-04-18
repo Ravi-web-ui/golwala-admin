@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Layout from "../components/Layout";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const BASE = (import.meta.env.VITE_API_URL || "http://localhost:5000/api") as string;
+const url = (path: string) => BASE + path;
 const headers = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` });
 
 interface Institute {
@@ -51,7 +52,7 @@ export default function CourseMappings() {
   const flash = (type: "ok" | "err", text: string) => { setMsg({ type, text }); setTimeout(() => setMsg(null), 3500); };
 
   const loadInstitutes = useCallback(async () => {
-    const r = await fetch(`${API}/institutes`, { headers: headers() });
+    const r = await fetch(url("/institutes"), { headers: headers() });
     if (r.ok) setInstitutes(await r.json());
   }, []);
 
@@ -59,7 +60,7 @@ export default function CourseMappings() {
     if (!selBranch && !selInstitute) { setMappings([]); return; }
     setLoading(true);
     const qs = selBranch ? `branchId=${selBranch}` : `instituteId=${selInstitute}`;
-    const r = await fetch(`${API}/course-mappings?${qs}`, { headers: headers() });
+    const r = await fetch(url("/course-mappings?" + qs), { headers: headers() });
     if (r.ok) setMappings(await r.json());
     setLoading(false);
   }, [selBranch, selInstitute]);
@@ -72,7 +73,7 @@ export default function CourseMappings() {
   // ── Institute CRUD ────────────────────────────────────────────────────────
   const saveInstitute = async () => {
     if (!instForm.name.trim()) return;
-    const r = await fetch(`${API}/institutes`, {
+    const r = await fetch(url("/institutes"), {
       method: "POST", headers: headers(),
       body: JSON.stringify(instForm),
     });
@@ -85,7 +86,7 @@ export default function CourseMappings() {
 
   const updateInstitute = async () => {
     if (!editInstModal) return;
-    const r = await fetch(`${API}/institutes/${editInstModal.id}`, {
+    const r = await fetch(url("/institutes/" + editInstModal.id), {
       method: "PATCH", headers: headers(),
       body: JSON.stringify(instForm),
     });
@@ -97,7 +98,7 @@ export default function CourseMappings() {
 
   const deleteInstitute = async (id: number, name: string) => {
     if (!confirm(`Delete institute "${name}" and all its branches & mappings?`)) return;
-    const r = await fetch(`${API}/institutes/${id}`, { method: "DELETE", headers: headers() });
+    const r = await fetch(url("/institutes/" + id), { method: "DELETE", headers: headers() });
     if (r.ok) { flash("ok", "Deleted"); if (selInstitute === id) { setSelInstitute(""); setSelBranch(""); } loadInstitutes(); }
     else flash("err", "Error deleting");
   };
@@ -105,7 +106,7 @@ export default function CourseMappings() {
   // ── Branch CRUD ───────────────────────────────────────────────────────────
   const saveBranch = async () => {
     if (!branchForm.name.trim() || !selInstitute) return;
-    const r = await fetch(`${API}/institutes/${selInstitute}/branches`, {
+    const r = await fetch(url("/institutes/" + selInstitute + "/branches"), {
       method: "POST", headers: headers(),
       body: JSON.stringify(branchForm),
     });
@@ -118,7 +119,7 @@ export default function CourseMappings() {
 
   const updateBranch = async () => {
     if (!editBranchModal || !selInstitute) return;
-    const r = await fetch(`${API}/institutes/${selInstitute}/branches/${editBranchModal.id}`, {
+    const r = await fetch(url("/institutes/" + selInstitute + "/branches/" + editBranchModal.id), {
       method: "PATCH", headers: headers(),
       body: JSON.stringify(branchForm),
     });
@@ -128,7 +129,7 @@ export default function CourseMappings() {
 
   const deleteBranch = async (b: Branch) => {
     if (!confirm(`Delete branch "${b.name}" and all its course mappings?`)) return;
-    const r = await fetch(`${API}/institutes/${selInstitute}/branches/${b.id}`, { method: "DELETE", headers: headers() });
+    const r = await fetch(url("/institutes/" + selInstitute + "/branches/" + b.id), { method: "DELETE", headers: headers() });
     if (r.ok) { flash("ok", "Deleted"); if (selBranch === b.id) setSelBranch(""); loadInstitutes(); loadMappings(); }
     else flash("err", "Error deleting");
   };
@@ -136,7 +137,7 @@ export default function CourseMappings() {
   // ── Course Mapping CRUD ───────────────────────────────────────────────────
   const saveMapping = async () => {
     if (!mapForm.ourCourseName.trim() || !mapForm.externalCourseName.trim() || !selBranch) return;
-    const r = await fetch(`${API}/course-mappings`, {
+    const r = await fetch(url("/course-mappings"), {
       method: "POST", headers: headers(),
       body: JSON.stringify({ ...mapForm, branchId: selBranch }),
     });
@@ -149,7 +150,7 @@ export default function CourseMappings() {
 
   const deleteMapping = async (m: CourseMapping) => {
     if (!confirm(`Delete mapping for "${m.ourCourseName}"?`)) return;
-    const r = await fetch(`${API}/course-mappings/${m.id}`, { method: "DELETE", headers: headers() });
+    const r = await fetch(url("/course-mappings/" + m.id), { method: "DELETE", headers: headers() });
     if (r.ok) { flash("ok", "Deleted"); loadMappings(); }
     else flash("err", "Error deleting");
   };
