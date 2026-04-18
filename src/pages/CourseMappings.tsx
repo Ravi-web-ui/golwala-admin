@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Layout from "../components/Layout";
 
-const API = (import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace(/\/api$/, "");
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const headers = () => ({ "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` });
 
 interface Institute {
@@ -51,7 +51,7 @@ export default function CourseMappings() {
   const flash = (type: "ok" | "err", text: string) => { setMsg({ type, text }); setTimeout(() => setMsg(null), 3500); };
 
   const loadInstitutes = useCallback(async () => {
-    const r = await fetch(`${API}/api/institutes`, { headers: headers() });
+    const r = await fetch(`${API}/institutes`, { headers: headers() });
     if (r.ok) setInstitutes(await r.json());
   }, []);
 
@@ -72,7 +72,7 @@ export default function CourseMappings() {
   // ── Institute CRUD ────────────────────────────────────────────────────────
   const saveInstitute = async () => {
     if (!instForm.name.trim()) return;
-    const r = await fetch(`${API}/api/institutes`, {
+    const r = await fetch(`${API}/institutes`, {
       method: "POST", headers: headers(),
       body: JSON.stringify(instForm),
     });
@@ -136,7 +136,7 @@ export default function CourseMappings() {
   // ── Course Mapping CRUD ───────────────────────────────────────────────────
   const saveMapping = async () => {
     if (!mapForm.ourCourseName.trim() || !mapForm.externalCourseName.trim() || !selBranch) return;
-    const r = await fetch(`${API}/api/course-mappings`, {
+    const r = await fetch(`${API}/course-mappings`, {
       method: "POST", headers: headers(),
       body: JSON.stringify({ ...mapForm, branchId: selBranch }),
     });
