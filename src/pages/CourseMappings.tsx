@@ -42,6 +42,7 @@ export default function CourseMappings() {
   const [mapModal,    setMapModal]    = useState(false);
   const [editInstModal,   setEditInstModal]   = useState<Institute | null>(null);
   const [editBranchModal, setEditBranchModal] = useState<Branch | null>(null);
+  const [editMapModal,    setEditMapModal]    = useState<CourseMapping | null>(null);
 
   // ── Forms ─────────────────────────────────────────────────────────────────
   const [instForm,   setInstForm]   = useState({ name: "", genioSubdomain: "", genioCollegeId: "" });
@@ -148,6 +149,18 @@ export default function CourseMappings() {
     loadMappings();
   };
 
+  const updateMapping = async () => {
+    if (!editMapModal) return;
+    const r = await fetch(url("/course-mappings/" + editMapModal.id), {
+      method: "PATCH", headers: headers(),
+      body: JSON.stringify(mapForm),
+    });
+    const d = await r.json();
+    if (!r.ok) { flash("err", d.error || "Error"); return; }
+    flash("ok", "Course mapping updated");
+    setEditMapModal(null); loadMappings();
+  };
+
   const deleteMapping = async (m: CourseMapping) => {
     if (!confirm(`Delete mapping for "${m.ourCourseName}"?`)) return;
     const r = await fetch(url("/course-mappings/" + m.id), { method: "DELETE", headers: headers() });
@@ -163,6 +176,11 @@ export default function CourseMappings() {
   const openEditBranch = (b: Branch) => {
     setBranchForm({ name: b.name, genioBranchId: String(b.genioBranchId || "") });
     setEditBranchModal(b);
+  };
+  const openEditMapping = (m: CourseMapping) => {
+    setMapForm({ ourCourseName: m.ourCourseName, externalCourseName: m.externalCourseName,
+      genioCourseId: String(m.genioCourseId || ""), genioSpecializationId: String(m.genioSpecializationId || "") });
+    setEditMapModal(m);
   };
 
   // ── Selected institute info ────────────────────────────────────────────────
@@ -348,10 +366,16 @@ export default function CourseMappings() {
                         </td>
                         {!selBranch && <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{m.branch.name}</td>}
                         <td className="px-4 py-3">
-                          <button onClick={() => deleteMapping(m)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2" strokeLinecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                          </button>
+                          <div className="flex gap-1">
+                            <button onClick={() => openEditMapping(m)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2" strokeLinecap="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            </button>
+                            <button onClick={() => deleteMapping(m)}
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeWidth="2" strokeLinecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -398,6 +422,23 @@ export default function CourseMappings() {
           <Field label="Branch Name *" value={branchForm.name} onChange={v => setBranchForm(f => ({ ...f, name: v }))} placeholder="e.g. Mumbai - Malad" />
           <Field label="Genio Branch ID" value={branchForm.genioBranchId} onChange={v => setBranchForm(f => ({ ...f, genioBranchId: v }))} placeholder="e.g. 78" type="number" />
           <ModalActions onCancel={() => setEditBranchModal(null)} onSave={updateBranch} saveLabel="Update" />
+        </Modal>
+      )}
+
+      {/* ── Edit Course Mapping Modal ───────────────────────────────────────── */}
+      {editMapModal && (
+        <Modal title={`Edit Mapping — ${editMapModal.ourCourseName}`} onClose={() => setEditMapModal(null)}>
+          <Field label="Our Course Name (RAV) *" value={mapForm.ourCourseName} onChange={v => setMapForm(f => ({ ...f, ourCourseName: v }))}
+            placeholder="e.g. M.Sc. in Integrative Nutrition & Dietetics" />
+          <Field label="Genio Course Name *" value={mapForm.externalCourseName} onChange={v => setMapForm(f => ({ ...f, externalCourseName: v }))}
+            placeholder="e.g. M.Sc. in Integrative Nutrition & Dietetics" />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Genio Course ID" value={mapForm.genioCourseId} onChange={v => setMapForm(f => ({ ...f, genioCourseId: v }))}
+              placeholder="e.g. 2" type="number" />
+            <Field label="Genio Specialization ID" value={mapForm.genioSpecializationId} onChange={v => setMapForm(f => ({ ...f, genioSpecializationId: v }))}
+              placeholder="e.g. 2" type="number" />
+          </div>
+          <ModalActions onCancel={() => setEditMapModal(null)} onSave={updateMapping} saveLabel="Update" />
         </Modal>
       )}
 
