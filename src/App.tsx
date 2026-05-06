@@ -18,6 +18,7 @@ const AddLead           = lazy(() => import("./pages/AddLead"));
 const ContactInquiries  = lazy(() => import("./pages/ContactInquiries"));
 const ChangePassword    = lazy(() => import("./pages/ChangePassword"));
 const CourseMappings    = lazy(() => import("./pages/CourseMappings"));
+const StudentApplications = lazy(() => import("./pages/StudentApplications"));
 
 const isAuth = () => !!localStorage.getItem("token");
 const Protected = ({ children }: { children: React.ReactNode }) =>
@@ -49,6 +50,7 @@ export default function App() {
         <Route path="/contact-inquiries"   element={<Protected><ContactInquiries /></Protected>} />
         <Route path="/change-password"     element={<Protected><ChangePassword /></Protected>} />
         <Route path="/course-mappings"     element={<Protected><CourseMappings /></Protected>} />
+        <Route path="/student-applications" element={<Protected><StudentApplications /></Protected>} />
         <Route path="*"                    element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
