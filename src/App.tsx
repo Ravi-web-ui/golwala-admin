@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 // Login loads eagerly — it's the entry point
 import Login from "./pages/Login";
+import StudentApplications from "./pages/StudentApplications";
 
 // All dashboard pages lazy loaded
 const Dashboard         = lazy(() => import("./pages/Dashboard"));
@@ -18,7 +19,6 @@ const AddLead           = lazy(() => import("./pages/AddLead"));
 const ContactInquiries  = lazy(() => import("./pages/ContactInquiries"));
 const ChangePassword    = lazy(() => import("./pages/ChangePassword"));
 const CourseMappings    = lazy(() => import("./pages/CourseMappings"));
-const StudentApplications = lazy(() => import("./pages/StudentApplications"));
 
 const isAuth = () => !!localStorage.getItem("token");
 const Protected = ({ children }: { children: React.ReactNode }) =>
