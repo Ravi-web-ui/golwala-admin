@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Applications - Golwala College Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: #f9fafb; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 24px; color: #1f2937; margin-bottom: 8px; }
+        .header p { color: #6b7280; font-size: 14px; }
+        .table-container { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f9fafb; padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; border-bottom: 1px solid #e5e7eb; }
+        td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; color: #1f2937; }
+        tr:hover { background: #f9fafb; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .badge-new { background: #dbeafe; color: #1e40af; }
+        .badge-reviewed { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .loading { text-align: center; padding: 40px; color: #6b7280; }
+        .error { text-align: center; padding: 40px; color: #dc2626; }
+        .app-no { font-family: monospace; font-weight: 600; color: #dc2626; }
+        .back-btn { display: inline-block; padding: 8px 16px; background: #dc2626; color: white; text-decoration: none; border-radius: 6px; font-size: 14px; margin-bottom: 20px; }
+        .back-btn:hover { background: #b91c1c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← Back to Admin Panel</a>
+        
+        <div class="header">
+            <h1>Student Applications</h1>
+            <p>Manage admission applications for Academic Year 2026-2027</p>
+        </div>
+
+        <div class="table-container">
+            <div id="loading" class="loading">Loading applications...</div>
+            <div id="error" class="error" style="display:none;"></div>
+            <table id="applicationsTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Application #</th>
+                        <th>Student Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Stream</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.golwalacollege.edu.in/api/student-admissions';
+        
+        async function fetchApplications() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayApplications(data.data || []);
+                } else {
+                    showError('Failed to load applications');
+                }
+            } catch (error) {
+                showError('Error connecting to server: ' + error.message);
+            }
+        }
+
+        function displayApplications(applications) {
+            document.getElementById('loading').style.display = 'none';
+            
+            if (applications.length === 0) {
+                document.getElementById('error').textContent = 'No applications found';
+                document.getElementById('error').style.display = 'block';
+                return;
+            }
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = applications.map(app => `
+                <tr>
+                    <td><span class="app-no">${app.applicationNo}</span></td>
+                    <td>${app.firstName} ${app.surname}</td>
+                    <td>${app.studentEmail}</td>
+                    <td>${app.studentMobile}</td>
+                    <td>${app.stream}</td>
+                    <td><span class="badge badge-${app.status}">${app.status.charAt(0).toUpperCase() + app.status.slice(1)}</span></td>
+                    <td>${new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('applicationsTable').style.display = 'table';
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+
+        // Load applications on page load
+        fetchApplications();
+    </script>
+</body>
+</html>
