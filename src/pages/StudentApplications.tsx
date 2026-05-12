@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { api } from "../lib/api";
-import { Eye, Search, Filter, Calendar, User, Mail, Phone, BookOpen } from "lucide-react";
+import { Search, Filter, Calendar, User, Mail, Phone, BookOpen, Trash2, FileText } from "lucide-react";
 
 interface Application {
   id: number;
@@ -25,9 +25,11 @@ interface Pagination {
 export default function StudentApplications() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 50, total: 0, totalPages: 0 });
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -54,6 +56,82 @@ export default function StudentApplications() {
     }
   };
 
+  const handleStatusUpdate = async (id: number, newStatus: string) => {
+    setUpdatingStatus(id);
+    try {
+      const res = await api.patch(`/student-admissions/${id}/status`, { status: newStatus });
+      if (res.success) {
+        setApplications(apps => apps.map(app => 
+          app.id === id ? { ...app, status: newStatus } : app
+        ));
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleDelete = async (id: number, applicationNo: string) => {
+    if (!confirm(`Are you sure you want to delete application ${applicationNo}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingId(id);
+    try {
+      const res = await api.del(`/student-admissions/${id}`);
+      if (res.success) {
+        setApplications(apps => apps.filter(app => app.id !== id));
+        setPagination(p => ({ ...p, total: p.total - 1 }));
+      } else {
+        alert(res.error || "Failed to delete application");
+      }
+    } catch (error) {
+      console.error("Error deleting application:", error);
+      alert("Failed to delete application");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleViewPDF = async (id: number) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/student-admissions/${id}/pdf`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch PDF');
+      }
+      
+      // Get the application number from the current application
+      const app = applications.find(a => a.id === id);
+      const filename = app ? `Application-${app.applicationNo}.pdf` : `Application-${id}.pdf`;
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new window
+      const pdfWindow = window.open(url, '_blank');
+      if (pdfWindow) {
+        // Set the window title to the application number
+        pdfWindow.onload = () => {
+          pdfWindow.document.title = filename;
+        };
+      }
+      
+      // Clean up after 5 seconds
+      setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+    } catch (error) {
+      console.error('Error viewing PDF:', error);
+      alert('Failed to open PDF');
+    }
+  };
+
   const filteredApplications = applications.filter(app => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
@@ -69,9 +147,10 @@ export default function StudentApplications() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       new: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
-      reviewed: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
+      under_review: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400",
       approved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400",
       rejected: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+      admission_done: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
       pending: "bg-gray-100 text-gray-700 dark:bg-gray-900/40 dark:text-gray-400",
     };
     return styles[status] || styles.pending;
@@ -135,10 +214,10 @@ export default function StudentApplications() {
               >
                 <option value="">All Status</option>
                 <option value="new">New</option>
-                <option value="reviewed">Reviewed</option>
+                <option value="under_review">Under Review</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
-                <option value="pending">Pending</option>
+                <option value="admission_done">Admission Done</option>
               </select>
             </div>
 
@@ -211,17 +290,9 @@ export default function StudentApplications() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                              style={{ background: "linear-gradient(135deg,#c0392b,#8e1a10)" }}>
-                              {app.firstName[0]}{app.surname[0]}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                                {app.firstName} {app.surname}
-                              </p>
-                            </div>
-                          </div>
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                            {app.firstName} {app.surname}
+                          </p>
                         </td>
                         <td className="px-4 py-3">
                           <div className="space-y-1">
@@ -242,9 +313,21 @@ export default function StudentApplications() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(app.status)}`}>
-                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                          </span>
+                          <select
+                            value={app.status}
+                            onChange={(e) => handleStatusUpdate(app.id, e.target.value)}
+                            disabled={updatingStatus === app.id}
+                            className={`text-xs font-medium px-2 py-1 rounded-lg border-0 cursor-pointer
+                              focus:outline-none focus:ring-2 focus:ring-red-500/20
+                              ${getStatusBadge(app.status)}
+                              ${updatingStatus === app.id ? 'opacity-50 cursor-wait' : ''}`}
+                          >
+                            <option value="new">New</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="admission_done">Admission Done</option>
+                          </select>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
@@ -253,15 +336,29 @@ export default function StudentApplications() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => window.location.href = `/student-applications/${app.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
-                              text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                              rounded-lg transition-colors"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            View
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleViewPDF(app.id)}
+                              title="View Application PDF"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
+                                text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20
+                                rounded-lg transition-colors"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                              View PDF
+                            </button>
+                            <button
+                              onClick={() => handleDelete(app.id, app.applicationNo)}
+                              disabled={deletingId === app.id}
+                              title="Delete Application"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium
+                                text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                                rounded-lg transition-colors disabled:opacity-50 disabled:cursor-wait"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              {deletingId === app.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -274,17 +371,11 @@ export default function StudentApplications() {
                 {filteredApplications.map((app) => (
                   <div key={app.id} className="p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
-                          style={{ background: "linear-gradient(135deg,#c0392b,#8e1a10)" }}>
-                          {app.firstName[0]}{app.surname[0]}
-                        </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                            {app.firstName} {app.surname}
-                          </p>
-                          <p className="text-xs font-mono text-red-600 dark:text-red-400">{app.applicationNo}</p>
-                        </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                          {app.firstName} {app.surname}
+                        </p>
+                        <p className="text-xs font-mono text-red-600 dark:text-red-400">{app.applicationNo}</p>
                       </div>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(app.status)}`}>
                         {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
@@ -311,13 +402,13 @@ export default function StudentApplications() {
                     </div>
 
                     <button
-                      onClick={() => window.location.href = `/student-applications/${app.id}`}
+                      onClick={() => handleViewPDF(app.id)}
                       className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium
-                        text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                        border border-red-200 dark:border-red-900/40 rounded-lg transition-colors"
+                        text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20
+                        border border-blue-200 dark:border-blue-900/40 rounded-lg transition-colors"
                     >
-                      <Eye className="w-4 h-4" />
-                      View Details
+                      <FileText className="w-4 h-4" />
+                      View PDF
                     </button>
                   </div>
                 ))}
